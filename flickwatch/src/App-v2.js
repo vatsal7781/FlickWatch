@@ -1,5 +1,6 @@
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import StarRating from "./StarRating";
+
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
@@ -7,41 +8,30 @@ const KEY = '24f165a4'
 
 export default function App() {
   const [query, setQuery] = useState('')
+  const [watched, setWatched] = useState([]);
   const [movies, setMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   // const [selectedId, setSelectedId] = useState(null)
   const [selectedId, setSelectedId] = useState(null)
 
-
-  // const [watched, setWatched] = useState([]);
-  const [watched, setWatched] = useState(
-    function () {
-      const storedValue = localStorage.getItem("watched")
-      return JSON.parse(storedValue)
-    }
-  );
-
-  // to avoid race condition 
-  // if an API call has been made and and the same request is already happening, it cancels the previous API request
   const controller = new AbortController()
 
-  function handleSelect(currId) {
-    setSelectedId(selectedId => selectedId === currId ? null : currId)
-  }
+  // Understanding Effects
 
-  function handleCloseMovie() {
-    setSelectedId(null)
-  }
+  // useEffect(function () {
+  //   console.log('A');
+  // }, [])
 
-  function handleAddWatched(watchedMovie) {
-    setWatched(watched => [...watched, watchedMovie])
-  }
+  // useEffect(function () {
+  //   console.log('B');
+  // })
 
-  useEffect(
-    function () {
-      localStorage.setItem('watched', JSON.stringify(watched))
-    }, [watched])
+  // console.log('C');
+
+  // useEffect(function () {
+  //   console.log('D');
+  // }, [query])
 
   useEffect(function () {
 
@@ -89,11 +79,25 @@ export default function App() {
     handleCloseMovie()
     fetchMovies()
 
-    // cleanup function
     return function () {
       controller.abort()
     }
   }, [query])
+
+
+  function handleSelect(currId) {
+    setSelectedId(selectedId => selectedId === currId ? null : currId)
+  }
+
+  function handleCloseMovie() {
+    setSelectedId(null)
+  }
+
+  function handleAddWatched(watchedMovie) {
+
+    setWatched(watched => [...watched, watchedMovie])
+    handleCloseMovie()
+  }
 
 
   return (
@@ -145,7 +149,6 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
   const [movie, setMovie] = useState({})
   const [isLoading, setIsLoading] = useState(false)
   const [userRating, setUserRating] = useState('')
-  const [avgRating, setAvgRating] = useState(0)
 
   const isWatched = watched.map((movie) => movie.imdbID).includes(selectedId)
 
@@ -165,23 +168,7 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
       userRating
     }
     onAddWatched(watchedMovie)
-    // onCloseMovie()
-    setAvgRating(Number(imdbRating))
-    setAvgRating((avgRating) => (avgRating + userRating) / 2)
-
   }
-
-  // const [isTop, setIsTop] = useState(imdbRating > 8)
-  // console.log(isTop);
-
-  // useEffect(
-  //   function () {
-  //     setIsTop(imdbRating > 8)
-  //   }, [imdbRating]
-  // )
-
-  // const isTop = imdbRating > 8
-  // console.log(isTop);
 
   useEffect(function () {
     async function getMovieDetails() {
@@ -250,7 +237,6 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
             </div>
           </header>
 
-          <p>{avgRating}</p>
           <section>
             <div className="rating">
               {!isWatched ?
@@ -318,34 +304,6 @@ function NumResults({ movies }) {
 
 function Search({ query, setQuery }) {
 
-  const inpurEl = useRef(null)
-
-
-  useEffect(function () {
-
-
-    function callback(e) {
-      if (document.activeElement === inpurEl.current) return;
-
-      if (e.code === 'Enter') {
-        setQuery('')
-        inpurEl.current.focus()
-      }
-    }
-    document.addEventListener('keydown', callback)
-  }, [setQuery])
-
-  useEffect(function () {
-    inpurEl.current.focus()
-  }, [])
-
-  // useEffect(
-  //   function () {
-  //     const el = document.querySelector('.search')
-  //     el.focus()
-  //   }
-  //   , [])
-
   return (
     <input
       className="search"
@@ -353,8 +311,6 @@ function Search({ query, setQuery }) {
       placeholder="Search movies..."
       value={query}
       onChange={(e) => setQuery(e.target.value)}
-      ref={inpurEl}
-
     />
   )
 }
@@ -443,7 +399,6 @@ function WatchedMoviesList({ watched, setWatched }) {
   function handleMovieRemove(id) {
     setWatched(watched => watched.filter(movie => movie.imdbID !== id))
   }
-
   return (
     <ul className="list">
       {watched.map((movie) => (

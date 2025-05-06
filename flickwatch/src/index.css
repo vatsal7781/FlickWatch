@@ -1,3 +1,16 @@
+/* to hide the default scrollbar */
+.box::-webkit-scrollbar {
+  display: none;
+}
+
+.list::-webkit-scrollbar {
+  display: none;
+}
+
+.list-watched::-webkit-scrollbar {
+  display: none;
+}
+
 :root {
   --color-primary: #6741d9;
   --color-primary-light: #7950f2;
